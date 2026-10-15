@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КакАБум — Магазин топовой техники и девайсов</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f6f9;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .gradient-banner {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        .discount-badge {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Modal animation */
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 200ms ease-out, transform 200ms ease-out;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-gray-800">
+
+    <header class="sticky top-0 z-40 bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Logo -->
+            <div class="flex items-center space-x-2">
+                <a href="#" onclick="resetSearch(); return false;" class="text-2xl sm:text-3xl font-extrabold tracking-wider flex items-center gap-2">
+                    <span class="bg-yellow-400 text-blue-900 px-2 py-1 rounded-lg shadow transform -rotate-3 hover:rotate-0 transition-transform">КакA</span>Бум
+                    <i class="fa-solid fa-bolt text-yellow-300"></i>
+                </a>
+            </div>
+
+            <!-- Search Bar with Live Suggestions -->
+            <div class="flex-1 max-w-xl min-w-[260px] order-3 md:order-2 relative">
+                <div class="relative">
+                    <input type="text" id="searchInput" oninput="handleSearchInput(this.value)" data-i18n-placeholder="search_placeholder" placeholder="Поиск девайсов, ноутбуков, клавиатур..." 
+                           class="w-full py-2 pl-4 pr-10 text-gray-900 rounded-full focus:outline-none focus:ring-2 focus:ring-yellow-400 shadow-inner">
+                    <button id="searchClearBtn" onclick="clearSearchInput()" class="hidden absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <button class="absolute right-1 top-1/2 -translate-y-1/2 bg-yellow-400 text-blue-900 px-4 py-1.5 rounded-full hover:bg-yellow-300 transition font-bold flex items-center justify-center">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+
+                <!-- Autocomplete Dropdown -->
+                <div id="searchAutocomplete" class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 max-h-80 overflow-y-auto">
+                    <!-- Dynamic suggestions list -->
+                </div>
+            </div>
+
+            <!-- Right Header Info -->
+            <div class="flex items-center space-x-4 order-2 md:order-3 ml-auto">
+                
+                <!-- Language Switcher -->
+                <button id="langToggleBtn" onclick="toggleLanguage()" class="bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-1 transition border border-blue-500">
+                    <i class="fa-solid fa-globe"></i>
+                    <span id="currentLang">RU</span>
+                </button>
+
+                <!-- User Balance & Profile -->
+                <div class="hidden sm:flex items-center bg-blue-700/80 px-3 py-1.5 rounded-xl border border-blue-500/50">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="w-8 h-8 rounded-full border-2 border-yellow-400 object-cover">
+                    <div class="ml-2 text-xs">
+                        <div class="font-bold leading-tight">Alex_Gamer</div>
+                        <div class="text-yellow-300 font-extrabold flex items-center gap-1">
+                            <i class="fa-solid fa-wallet text-[10px]"></i> <span id="userBalance">$1,250</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Button -->
+                <button onclick="toggleCartModal()" class="relative bg-yellow-400 hover:bg-yellow-300 text-blue-950 font-bold px-4 py-2 rounded-xl flex items-center gap-2 shadow-md hover:scale-105 transition-all">
+                    <i class="fa-solid fa-cart-shopping text-lg"></i>
+                    <span data-i18n="cart_btn" class="hidden sm:inline">Корзина</span>
+                    <span id="cartBadge" class="bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col md:flex-row gap-6 p-4 md:p-6">
+        
+        <!-- LEFT ASIDE -->
+        <aside class="w-full md:w-64 shrink-0 flex flex-col gap-6">
+            
+            <!-- Categories Box -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+                    <i class="fa-solid fa-list-ul text-blue-600"></i>
+                    <span data-i18n="categories_title">Категории</span>
+                </h2>
+                <ul class="space-y-1 text-sm font-medium">
+                    <li>
+                        <button onclick="filterByCategory('all')" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition text-gray-700 font-semibold">
+                            <span class="flex items-center gap-2.5"><i class="fa-solid fa-border-all text-gray-400 w-5"></i> <span data-i18n="cat_all">Все товары</span></span>
+                            <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="filterByCategory('Клавиатуры')" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition text-gray-700">
+                            <span class="flex items-center gap-2.5"><i class="fa-solid fa-keyboard text-gray-400 w-5"></i> <span data-i18n="cat_keyboards">Клавиатуры</span></span>
+                            <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="filterByCategory('Мыши')" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition text-gray-700">
+                            <span class="flex items-center gap-2.5"><i class="fa-solid fa-computer-mouse text-gray-400 w-5"></i> <span data-i18n="cat_mice">Мыши</span></span>
+                            <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="filterByCategory('Наушники')" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition text-gray-700">
+                            <span class="flex items-center gap-2.5"><i class="fa-solid fa-headphones text-gray-400 w-5"></i> <span data-i18n="cat_headsets">Наушники</span></span>
+                            <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="filterByCategory('Мониторы')" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition text-gray-700">
+                            <span class="flex items-center gap-2.5"><i class="fa-solid fa-desktop text-gray-400 w-5"></i> <span data-i18n="cat_monitors">Мониторы</span></span>
+                            <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="filterByCategory('Компьютеры')" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition text-gray-700">
+                            <span class="flex items-center gap-2.5"><i class="fa-solid fa-laptop text-gray-400 w-5"></i> <span data-i18n="cat_laptops">Компьютеры/Ноутбуки</span></span>
+                            <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="filterByCategory('Геймпады')" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition text-gray-700">
+                            <span class="flex items-center gap-2.5"><i class="fa-solid fa-gamepad text-gray-400 w-5"></i> <span data-i18n="cat_gamepads">Геймпады</span></span>
+                            <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Super Deals Widget -->
+            <div class="bg-gradient-to-br from-red-500 to-amber-500 rounded-2xl shadow-md p-4 text-white">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-extrabold flex items-center gap-1.5 text-base">
+                        <i class="fa-solid fa-fire text-yellow-300 discount-badge"></i>
+                        <span data-i18n="super_deals">СУПЕР СКИДКИ</span>
+                    </h3>
+                    <span class="bg-black/30 text-xs px-2 py-0.5 rounded-full text-yellow-200 font-mono" id="dealTimer">14:22:09</span>
+                </div>
+
+                <!-- Mini Super Deal Product Card -->
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 cursor-pointer hover:bg-white/20 transition" onclick="openProductModal(100)">
+                    <img src="https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=400&auto=format&fit=crop&q=80" alt="Super Deal" class="w-full h-32 object-cover rounded-lg mb-2">
+                    <h4 class="font-bold text-sm line-clamp-1">ATK RS6 Ultra Magnetic Keyboard</h4>
+                    <p class="text-xs text-red-100 line-through">$189.99</p>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-lg font-black text-yellow-300">$129.99</span>
+                        <button onclick="event.stopPropagation(); addToCart('ATK RS6 Ultra Magnetic Keyboard', 129.99, 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=400&auto=format&fit=crop&q=80')" class="bg-yellow-400 text-red-950 hover:bg-yellow-300 text-xs font-bold px-3 py-1.5 rounded-lg shadow">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 min-w-0 space-y-6">
+
+            <div class="relative overflow-hidden rounded-2xl shadow-lg gradient-banner text-white h-56 sm:h-64 group">
+                <div id="carouselTrack" class="flex h-full transition-transform duration-500 ease-out">
+                    
+                    <!-- Slide 1 -->
+                    <div class="w-full shrink-0 h-full flex items-center justify-between p-6 sm:p-10 relative">
+                        <div class="max-w-md z-10">
+                            <span class="bg-yellow-400 text-blue-950 font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider mb-2 inline-block" data-i18n="banner_tag1">Мега Распродажа</span>
+                            <h2 class="text-2xl sm:text-4xl font-extrabold mb-2" data-i18n="banner_title1">Игровые Наборы до -40%</h2>
+                            <p class="text-xs sm:text-sm text-blue-100 mb-4" data-i18n="banner_sub1">Обнови свой сетап топовыми механическими клавиатурами и гарнитурами!</p>
+                            <a href="#newProducts" class="inline-block bg-yellow-400 text-blue-950 font-bold px-5 py-2.5 rounded-xl hover:bg-yellow-300 transition text-sm shadow-md" data-i18n="buy_now">
+                                Смотреть Каталог
+                            </a>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&auto=format&fit=crop&q=80" alt="Banner Setup" class="absolute right-0 top-0 h-full w-1/2 object-cover opacity-40 sm:opacity-90 mask-linear">
+                    </div>
+
+                    <!-- Slide 2 -->
+                    <div class="w-full shrink-0 h-full flex items-center justify-between p-6 sm:p-10 relative bg-gradient-to-r from-purple-900 to-indigo-900">
+                        <div class="max-w-md z-10">
+                            <span class="bg-purple-400 text-purple-950 font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider mb-2 inline-block" data-i18n="banner_tag2">Новое Поступление</span>
+                            <h2 class="text-2xl sm:text-4xl font-extrabold mb-2" data-i18n="banner_title2">OLED Мониторы 240Hz</h2>
+                            <p class="text-xs sm:text-sm text-purple-100 mb-4" data-i18n="banner_sub2">Невероятная четкость и скорость для профессионального киберспорта.</p>
+                            <a href="#newProducts" class="inline-block bg-purple-400 text-purple-950 font-bold px-5 py-2.5 rounded-xl hover:bg-purple-300 transition text-sm shadow-md" data-i18n="buy_now">
+                                Выбрать Монитор
+                            </a>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600&auto=format&fit=crop&q=80" alt="Monitor" class="absolute right-0 top-0 h-full w-1/2 object-cover opacity-40 sm:opacity-90">
+                    </div>
+
+                </div>
+
+                <button onclick="prevSlide()" class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-9 h-9 rounded-full flex items-center justify-center transition opacity-0 group-hover:opacity-100">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button onclick="nextSlide()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-9 h-9 rounded-full flex items-center justify-center transition opacity-0 group-hover:opacity-100">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+
+                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-2">
+                    <button onclick="goToSlide(0)" class="w-2.5 h-2.5 rounded-full bg-white opacity-100 slide-dot"></button>
+                    <button onclick="goToSlide(1)" class="w-2.5 h-2.5 rounded-full bg-white opacity-50 slide-dot"></button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-extrabold text-gray-800 flex items-center gap-2">
+                        <i class="fa-solid fa-star text-yellow-400"></i>
+                        <span data-i18n="popular_heading">Популярные Девайсы</span>
+                    </h3>
+                    <div class="flex space-x-2">
+                        <button onclick="scrollProductsLeft()" class="p-2 rounded-lg bg-gray-100 hover:bg-blue-600 hover:text-white transition">
+                            <i class="fa-solid fa-chevron-left text-xs"></i>
+                        </button>
+                        <button onclick="scrollProductsRight()" class="p-2 rounded-lg bg-gray-100 hover:bg-blue-600 hover:text-white transition">
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="scrollableProducts" class="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth py-2">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <div id="newProducts" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
+                    <h3 class="text-xl font-extrabold text-gray-800 flex items-center gap-2">
+                        <i class="fa-solid fa-box-open text-blue-600"></i>
+                        <span id="gridTitle" data-i18n="new_products_heading">Новые Поступления</span>
+                    </h3>
+                    <div id="activeFilterBadge" class="hidden bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2">
+                        <span id="activeFilterText">Фильтр</span>
+                        <button onclick="resetSearch()" class="text-blue-600 hover:text-blue-900 font-bold"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="productsGrid">
+                    <!-- Products rendered via JS -->
+                </div>
+
+                <!-- Empty Search Result View -->
+                <div id="noResultsView" class="hidden text-center py-12">
+                    <i class="fa-solid fa-magnifying-glass text-5xl text-gray-300 mb-3"></i>
+                    <h4 class="text-lg font-bold text-gray-700" data-i18n="no_results_title">Ничего не найдено</h4>
+                    <p class="text-sm text-gray-500 mb-4" data-i18n="no_results_desc">Попробуйте изменить запрос или сбросить фильтры</p>
+                    <button onclick="resetSearch()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-xl text-sm transition" data-i18n="reset_search_btn">
+                        Сбросить поиск
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="productDetailModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative my-8 max-h-[90vh] overflow-y-auto">
+            
+            <button onclick="closeProductModal()" class="absolute right-4 top-4 bg-gray-100 hover:bg-gray-200 text-gray-600 w-8 h-8 rounded-full flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Modal Body Container -->
+            <div id="modalContent">
+                <!-- Dynamically populated product details -->
+            </div>
+        </div>
+    </div>
+
+    <div id="cartModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-3 mb-4">
+                <h3 class="text-xl font-bold flex items-center gap-2 text-gray-800">
+                    <i class="fa-solid fa-cart-shopping text-blue-600"></i>
+                    <span data-i18n="cart_modal_title">Ваша Корзина</span>
+                </h3>
+                <button onclick="toggleCartModal()" class="text-gray-400 hover:text-gray-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Cart Items Container -->
+            <div id="cartItemsList" class="max-h-60 overflow-y-auto space-y-3 pr-1">
+                <!-- Dynamic Items -->
+            </div>
+
+            <!-- Total and Checkout -->
+            <div class="border-t pt-4 mt-4">
+                <div class="flex justify-between items-center text-lg font-bold text-gray-800 mb-4">
+                    <span data-i18n="total_price">Итого к оплате:</span>
+                    <span id="cartTotal" class="text-blue-600">$0.00</span>
+                </div>
+                <button onclick="checkoutCart()" class="w-full bg-yellow-400 hover:bg-yellow-300 text-blue-950 font-extrabold py-3 rounded-xl transition shadow-md text-center" data-i18n="checkout_btn">
+                    Оформить Заказ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-amber-400 text-blue-950 mt-12 border-t-4 border-amber-500 shadow-inner">
+        <div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <div>
+                <div class="text-2xl font-black mb-3 flex items-center gap-2">
+                    <span class="bg-blue-600 text-white px-2 py-0.5 rounded-lg">КакA</span>Бум
+                    <i class="fa-solid fa-bolt text-blue-900"></i>
+                </div>
+                <p class="text-sm font-medium text-amber-950 leading-relaxed" data-i18n="footer_desc">
+                    Интернет-магазин топовой компьютерной техники, периферии и игровых аксессуаров. Быстрая доставка и официальная гарантия!
+                </p>
+            </div>
+
+            <div>
+                <h4 class="text-lg font-bold mb-3 border-b border-amber-500/50 pb-1" data-i18n="contacts_title">Контакты</h4>
+                <ul class="space-y-2 text-sm font-medium text-amber-950">
+                    <li class="flex items-center gap-2">
+                        <i class="fa-solid fa-phone text-blue-800"></i> +7 (800) 555-35-35
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i class="fa-solid fa-envelope text-blue-800"></i> support@kakaboom.tech
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i class="fa-solid fa-location-dot text-blue-800"></i> <span data-i18n="address">г. Москва, ул. Киберспортивная, 42</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-lg font-bold mb-3 border-b border-amber-500/50 pb-1" data-i18n="social_title">Мы в соцсетях</h4>
+                <div class="flex space-x-3 mb-4">
+                    <a href="#" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:scale-110 transition shadow">
+                        <i class="fa-brands fa-telegram text-lg"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:scale-110 transition shadow">
+                        <i class="fa-brands fa-vk text-lg"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:scale-110 transition shadow">
+                        <i class="fa-brands fa-youtube text-lg"></i>
+                    </a>
+                </div>
+                <p class="text-xs text-amber-950 font-semibold">© 2026 КакАБум Tech Shop. Все права защищены.</p>
+            </div>
+
+        </div>
+    </footer>
+
+    <script>
+        let currentLang = 'ru';
+        let cart = [];
+        let activeCategoryFilter = 'all';
+        let searchQuery = '';
+        let activeModalTab = 'specs';
+
+        // Super deal fallback item
+        const superDealItem = {
+            id: 100,
+            name: "ATK RS6 Ultra Magnetic Keyboard",
+            category: "Клавиатуры",
+            price: 129.99,
+            oldPrice: 189.99,
+            rating: 4.9,
+            reviewsCount: 42,
+            image: "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=500&auto=format&fit=crop&q=80",
+            specs: {
+                "Тип переключателей": "Магнитные Hall Effect switches",
+                "Частота опроса": "8000 Hz Rapid Trigger",
+                "Подключение": "USB Type-C (Съемный)",
+                "Форм-фактор": "65%",
+                "Подсветка": "RGB Per-Key Customisable"
+            },
+            reviews: [
+                { user: "CyberPro", rating: 5, date: "10.10.2026", text: "Лучшая клавиатура с магнитными свитчами! Скорость отклика мгновенная." },
+                { user: "Gamer_X", rating: 5, date: "02.10.2026", text: "Rapid trigger работает великолепно в CS2 и Valorant." }
+            ]
+        };
+
+        const productsData = [
+            {
+                id: 1,
+                name: "Logitech G Pro X Superlight 2",
+                category: "Мыши",
+                price: 159.99,
+                rating: 4.9,
+                reviewsCount: 128,
+                image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&auto=format&fit=crop&q=80",
+                specs: {
+                    "Сенсор": "HERO 2 (до 32,000 DPI)",
+                    "Вес": "60 грамм",
+                    "Переключатели": "LIGHTFORCE Гибридные оптико-механические",
+                    "Время работы": "До 95 часов",
+                    "Частота опроса": "2000 Гц"
+                },
+                reviews: [
+                    { user: "Максим П.", rating: 5, date: "12.09.2026", text: "Очень легкая мышь! Форма безупречна для любого хвата." },
+                    { user: "S1mple_fan", rating: 5, date: "28.08.2026", text: "Батарея держит очень долго, зарядка за 30 минут." }
+                ]
+            },
+            {
+                id: 2,
+                name: "Razer Huntsman V3 Pro TKL",
+                category: "Клавиатуры",
+                price: 219.99,
+                rating: 4.8,
+                reviewsCount: 89,
+                image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=80",
+                specs: {
+                    "Переключатели": "Razer Analog Optical Switches Gen-2",
+                    "Аналоговый ввод": "Настройка глубины нажатия от 0.1 до 4.0 мм",
+                    "Формат": "TKL (Без цифрового блока)",
+                    "Корпус": "Алюминиевый топ-плейт",
+                    "Подставка": "Магнитная подставка под запястья"
+                },
+                reviews: [
+                    { user: "Кирилл B.", rating: 5, date: "15.09.2026", text: "Аналоговые свитчи позволяют плавно управлять авто в играх!" }
+                ]
+            },
+            {
+                id: 3,
+                name: "SteelSeries Arctis Nova Pro Wireless",
+                category: "Наушники",
+                price: 349.99,
+                rating: 4.9,
+                reviewsCount: 204,
+                image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&auto=format&fit=crop&q=80",
+                specs: {
+                    "Звук": "Hi-Res Neodymium Drivers 40 мм",
+                    "Шумоподавление": "Активное ANC с режимом прозрачности",
+                    "Микрофон": "ClearCast Gen 2 с ИИ-шумоподавлением",
+                    "Подключение": "2.4 GHz Wireless + Bluetooth одновременно",
+                    "Особенность": "Горячая замена аккумулятора на базовой станции"
+                },
+                reviews: [
+                    { user: "Александр M.", rating: 5, date: "01.10.2026", text: "Сменная батарейка в базе — это гениально. Звук потрясающий." }
+                ]
+            },
+            {
+                id: 4,
+                name: "ASUS ROG Swift OLED PG27AQDM",
+                category: "Мониторы",
+                price: 899.99,
+                rating: 5.0,
+                reviewsCount: 65,
+                image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&auto=format&fit=crop&q=80",
+                specs: {
+                    "Диагональ & Тип": "27 дюймов OLED",
+                    "Разрешение": "QHD (2560 x 1440)",
+                    "Частота обновления": "240 Гц",
+                    "Время отклика": "0.03 мс (GtG)",
+                    "Яркость": "1000 нит (HDR Peak)"
+                },
+                reviews: [
+                    { user: "Dmitry_K", rating: 5, date: "20.09.2026", text: "Черный цвет действительно глубокий. Играть после IPS — восторг." }
+                ]
+            },
+            {
+                id: 5,
+                name: "Игровой ПК KakABoom Ultra i9 / RTX 4090",
+                category: "Компьютеры",
+                price: 3499.00,
+                rating: 5.0,
+                reviewsCount: 18,
+                image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500&auto=format&fit=crop&q=80",
+                specs: {
+                    "Процессор": "Intel Core i9-14900KS",
+                    "Видеокарта": "NVIDIA GeForce RTX 4090 24GB",
+                    "ОЗУ": "64GB DDR5 7200MHz Corsair Vengeance",
+                    "Накопитель": "4TB NVMe SSD PCIe 4.0",
+                    "Охлаждение": "Кастомная СЖО 360mm"
+                },
+                reviews: [
+                    { user: "Roman", rating: 5, date: "05.10.2026", text: "Тянет абсолютно всё на максимум в 4K с лучами!" }
+                ]
+            },
+            {
+                id: 6,
+                name: "Геймпад Xbox Elite Wireless Series 2",
+                category: "Геймпады",
+                price: 179.99,
+                rating: 4.7,
+                reviewsCount: 142,
+                image: "https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?w=500&auto=format&fit=crop&q=80",
+                specs: {
+                    "Лепестки": "4 съемных металолепестка сзади",
+                    "Стики": "Регулируемое натяжение ходов",
+                    "Курки": "Короткий ход (Hair Trigger Locks)",
+                    "Автономия": "До 40 часов работы"
+                },
+                reviews: [
+                    { user: "Игорь_99", rating: 5, date: "18.09.2026", text: "Настройка ходов стиков и курков — идеальный геймпад." }
+                ]
+            },
+            {
+                id: 7,
+                name: "ROG Harpe Ace Aim Lab Edition",
+                category: "Мыши",
+                price: 149.99,
+                rating: 4.8,
+                reviewsCount: 53,
+                image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=400&auto=format&fit=crop&q=80",
+                specs: {
+                    "Сенсор": "ROG AimPoint (36,000 DPI)",
+                    "Вес": "54 грамма",
+                    "Синхронизация": "Aim Lab Settings Optimizer"
+                },
+                reviews: []
+            },
+            {
+                id: 8,
+                name: "Custom Keychron Q1 Pro Wireless",
+                category: "Клавиатуры",
+                price: 199.99,
+                rating: 4.9,
+                reviewsCount: 77,
+                image: "https://images.unsplash.com/photo-1595225476474-87563907a212?w=400&auto=format&fit=crop&q=80",
+                specs: {
+                    "Корпус": "Цельноалюминиевый CNC",
+                    "Переключатели": "Gateron Jupiter Red (Hot-Swap)",
+                    "Прошивка": "QMK / VIA поддержка"
+                },
+                reviews: []
+            }
+        ];
+
+        const translations = {
+            ru: {
+                search_placeholder: "Поиск девайсов, ноутбуков, клавиатур...",
+                cart_btn: "Корзина",
+                categories_title: "Категории",
+                cat_all: "Все товары",
+                cat_keyboards: "Клавиатуры",
+                cat_mice: "Мыши",
+                cat_headsets: "Наушники",
+                cat_monitors: "Мониторы",
+                cat_laptops: "Компьютеры/Ноутбуки",
+                cat_gamepads: "Геймпады",
+                super_deals: "СУПЕР СКИДКИ",
+                banner_tag1: "Мега Распродажа",
+                banner_title1: "Игровые Наборы до -40%",
+                banner_sub1: "Обнови свой сетап топовыми механическими клавиатурами и гарнитурами!",
+                banner_tag2: "Новое Поступление",
+                banner_title2: "OLED Мониторы 240Hz",
+                banner_sub2: "Невероятная четкость и скорость для профессионального киберспорта.",
+                buy_now: "Смотреть Каталог",
+                popular_heading: "Популярные Девайсы",
+                new_products_heading: "Новые Поступления",
+                add_btn: "В корзину",
+                cart_modal_title: "Ваша Корзина",
+                total_price: "Итого к оплате:",
+                checkout_btn: "Оформить Заказ",
+                footer_desc: "Интернет-магазин топовой компьютерной техники, периферии и игровых аксессуаров. Быстрая доставка и официальная гарантия!",
+                contacts_title: "Контакты",
+                address: "г. Москва, ул. Киберспортивная, 42",
+                social_title: "Мы в соцсетях",
+                cart_empty: "Корзина пуста. Добавьте товары!",
+                no_results_title: "Ничего не найдено",
+                no_results_desc: "Попробуйте изменить запрос или сбросить фильтры",
+                reset_search_btn: "Сбросить поиск",
+                specs_tab: "Характеристики",
+                reviews_tab: "Отзывы",
+                write_review: "Оставить отзыв",
+                in_stock: "В наличии",
+                add_review_submit: "Отправить отзыв"
+            },
+            en: {
+                search_placeholder: "Search devices, laptops, keyboards...",
+                cart_btn: "Cart",
+                categories_title: "Categories",
+                cat_all: "All Products",
+                cat_keyboards: "Keyboards",
+                cat_mice: "Mice",
+                cat_headsets: "Headsets",
+                cat_monitors: "Monitors",
+                cat_laptops: "Computers/Laptops",
+                cat_gamepads: "Gamepads",
+                super_deals: "SUPER DEALS",
+                banner_tag1: "Mega Sale",
+                banner_title1: "Gaming Bundles up to -40%",
+                banner_sub1: "Upgrade your setup with top mechanical keyboards & headsets!",
+                banner_tag2: "New Arrival",
+                banner_title2: "OLED Monitors 240Hz",
+                banner_sub2: "Unmatched clarity and response time for pro esports.",
+                buy_now: "View Catalog",
+                popular_heading: "Popular Devices",
+                new_products_heading: "New Arrivals",
+                add_btn: "Add to Cart",
+                cart_modal_title: "Your Shopping Cart",
+                total_price: "Total Amount:",
+                checkout_btn: "Checkout Now",
+                footer_desc: "E-shop for top PC hardware, peripherals and gaming accessories. Fast delivery and official warranty!",
+                contacts_title: "Contacts",
+                address: "Esports St. 42, Tech City",
+                social_title: "Social Media",
+                cart_empty: "Your cart is empty. Add some products!",
+                no_results_title: "No products found",
+                no_results_desc: "Try changing your search term or reset filters",
+                reset_search_btn: "Reset Search",
+                specs_tab: "Specifications",
+                reviews_tab: "Reviews",
+                write_review: "Write a Review",
+                in_stock: "In Stock",
+                add_review_submit: "Submit Review"
+            }
+        };
+
+        function getFilteredProducts() {
+            return productsData.filter(product => {
+                const matchesCategory = activeCategoryFilter === 'all' || product.category === activeCategoryFilter;
+                const matchesSearch = searchQuery === '' || 
+                    product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                    product.category.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesCategory && matchesSearch;
+            });
+        }
+
+        function handleSearchInput(value) {
+            searchQuery = value.trim();
+            const clearBtn = document.getElementById('searchClearBtn');
+            const autocomplete = document.getElementById('searchAutocomplete');
+
+            if (searchQuery.length > 0) {
+                clearBtn.classList.remove('hidden');
+                
+                // Build autocomplete suggestions
+                const matches = productsData.filter(p => 
+                    p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                    p.category.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+
+                if (matches.length > 0) {
+                    autocomplete.innerHTML = matches.map(p => `
+                        <div onclick="selectSearchSuggestion(${p.id})" class="p-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between border-b last:border-0">
+                            <div class="flex items-center gap-3">
+                                <img src="${p.image}" class="w-10 h-10 object-cover rounded-lg">
+                                <div>
+                                    <div class="font-bold text-sm text-gray-800">${p.name}</div>
+                                    <div class="text-xs text-blue-600 font-medium">${p.category}</div>
+                                </div>
+                            </div>
+                            <span class="font-extrabold text-sm text-blue-700">$${p.price.toFixed(2)}</span>
+                        </div>
+                    `).join('');
+                    autocomplete.classList.remove('hidden');
+                } else {
+                    autocomplete.innerHTML = `<div class="p-4 text-center text-sm text-gray-400">${translations[currentLang].no_results_title}</div>`;
+                    autocomplete.classList.remove('hidden');
+                }
+
+            } else {
+                clearBtn.classList.add('hidden');
+                autocomplete.classList.add('hidden');
+            }
+
+            renderProducts();
+            updateFilterBadge();
+        }
+
+        function selectSearchSuggestion(id) {
+            document.getElementById('searchAutocomplete').classList.add('hidden');
+            openProductModal(id);
+        }
+
+        function clearSearchInput() {
+            document.getElementById('searchInput').value = '';
+            handleSearchInput('');
+        }
+
+        function filterByCategory(cat) {
+            activeCategoryFilter = cat;
+            renderProducts();
+            updateFilterBadge();
+        }
+
+        function resetSearch() {
+            activeCategoryFilter = 'all';
+            searchQuery = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchClearBtn').classList.add('hidden');
+            document.getElementById('searchAutocomplete').classList.add('hidden');
+            renderProducts();
+            updateFilterBadge();
+        }
+
+        function updateFilterBadge() {
+            const badge = document.getElementById('activeFilterBadge');
+            const text = document.getElementById('activeFilterText');
+            
+            if (activeCategoryFilter !== 'all' || searchQuery !== '') {
+                badge.classList.remove('hidden');
+                let badgeContent = [];
+                if (activeCategoryFilter !== 'all') badgeContent.push(`Категория: ${activeCategoryFilter}`);
+                if (searchQuery !== '') badgeContent.push(`Поиск: "${searchQuery}"`);
+                text.innerText = badgeContent.join(' | ');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function openProductModal(productId) {
+            let product = productsData.find(p => p.id === productId);
+            if (!product && productId === 100) product = superDealItem;
+            if (!product) return;
+
+            const modal = document.getElementById('productDetailModal');
+            const modalContent = document.getElementById('modalContent');
+
+            modalContent.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Image Column -->
+                    <div class="flex flex-col items-center">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-64 sm:h-80 object-cover rounded-2xl border shadow-inner">
+                        <div class="flex items-center gap-2 mt-3 text-sm text-green-600 font-bold">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>${translations[currentLang].in_stock}</span>
+                        </div>
+                    </div>
+
+                    <!-- Info Column -->
+                    <div class="flex flex-col justify-between">
+                        <div>
+                            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-2">
+                                ${product.category}
+                            </span>
+                            <h2 class="text-2xl font-black text-gray-800 leading-tight mb-2">${product.name}</h2>
+                            
+                            <!-- Rating -->
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="flex text-yellow-400 text-sm">
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                </div>
+                                <span class="text-xs font-bold text-gray-600">${product.rating || 4.9} (${product.reviews ? product.reviews.length : 0} отзывов)</span>
+                            </div>
+
+                            <!-- Price -->
+                            <div class="mb-6 flex items-baseline gap-3">
+                                <span class="text-3xl font-extrabold text-blue-600">$${product.price.toFixed(2)}</span>
+                                ${product.oldPrice ? `<span class="text-lg text-gray-400 line-through">$${product.oldPrice.toFixed(2)}</span>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Modal CTA Button -->
+                        <button onclick="addToCart('${product.name}', ${product.price}, '${product.image}')" class="w-full bg-yellow-400 hover:bg-yellow-300 text-blue-950 font-extrabold py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-base">
+                            <i class="fa-solid fa-cart-plus text-lg"></i>
+                            <span>${translations[currentLang].add_btn}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabs Navigation -->
+                <div class="border-b mt-8 flex space-x-6 text-sm font-bold">
+                    <button onclick="switchModalTab('${product.id}', 'specs')" id="tabBtnSpecs" class="pb-3 border-b-2 border-blue-600 text-blue-600">
+                        ${translations[currentLang].specs_tab}
+                    </button>
+                    <button onclick="switchModalTab('${product.id}', 'reviews')" id="tabBtnReviews" class="pb-3 text-gray-400 hover:text-gray-600">
+                        ${translations[currentLang].reviews_tab} (${product.reviews ? product.reviews.length : 0})
+                    </button>
+                </div>
+
+                <!-- Tab Content: Specs -->
+                <div id="tabContentSpecs" class="py-4 space-y-2 text-sm">
+                    ${Object.entries(product.specs || {}).map(([key, value]) => `
+                        <div class="flex justify-between py-2 border-b border-gray-100">
+                            <span class="text-gray-500 font-medium">${key}:</span>
+                            <span class="text-gray-800 font-bold">${value}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- Tab Content: Reviews -->
+                <div id="tabContentReviews" class="py-4 hidden space-y-4">
+                    <!-- Write Review Form -->
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-4">
+                        <h4 class="font-bold text-sm mb-2 text-gray-800">${translations[currentLang].write_review}</h4>
+                        <div class="flex gap-2 mb-2 text-yellow-400 cursor-pointer" id="reviewStarRating">
+                            <i class="fa-solid fa-star" onclick="setFormRating(1)"></i>
+                            <i class="fa-solid fa-star" onclick="setFormRating(2)"></i>
+                            <i class="fa-solid fa-star" onclick="setFormRating(3)"></i>
+                            <i class="fa-solid fa-star" onclick="setFormRating(4)"></i>
+                            <i class="fa-solid fa-star" onclick="setFormRating(5)"></i>
+                        </div>
+                        <textarea id="reviewText" rows="2" placeholder="Поделитесь впечатлениями о девайсе..." class="w-full p-2.5 text-xs rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        <button onclick="submitReview(${product.id})" class="mt-2 bg-blue-600 text-white font-bold text-xs px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                            ${translations[currentLang].add_review_submit}
+                        </button>
+                    </div>
+
+                    <!-- Reviews List -->
+                    <div class="space-y-3" id="reviewsList">
+                        ${(product.reviews && product.reviews.length > 0) ? product.reviews.map(r => `
+                            <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-bold text-xs text-gray-800">${r.user}</span>
+                                    <span class="text-[10px] text-gray-400">${r.date}</span>
+                                </div>
+                                <div class="flex text-yellow-400 text-xs mb-1">
+                                    ${Array(r.rating).fill('<i class="fa-solid fa-star"></i>').join('')}
+                                </div>
+                                <p class="text-xs text-gray-600">${r.text}</p>
+                            </div>
+                        `).join('') : '<p class="text-xs text-gray-400 text-center py-4">Пока нет отзывов. Будьте первым!</p>'}
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('productDetailModal').classList.add('hidden');
+        }
+
+        let selectedFormRating = 5;
+        function setFormRating(stars) {
+            selectedFormRating = stars;
+            const container = document.getElementById('reviewStarRating');
+            if (!container) return;
+            const icons = container.querySelectorAll('i');
+            icons.forEach((icon, index) => {
+                if (index < stars) {
+                    icon.className = 'fa-solid fa-star text-yellow-400';
+                } else {
+                    icon.className = 'fa-regular fa-star text-gray-300';
+                }
+            });
+        }
+
+        function submitReview(productId) {
+            const textInput = document.getElementById('reviewText');
+            if (!textInput || !textInput.value.trim()) return;
+
+            let product = productsData.find(p => p.id === productId);
+            if (!product && productId === 100) product = superDealItem;
+            if (!product) return;
+
+            if (!product.reviews) product.reviews = [];
+            product.reviews.unshift({
+                user: "Alex_Gamer",
+                rating: selectedFormRating,
+                date: new Date().toLocaleDateString(),
+                text: textInput.value.trim()
+            });
+
+            openProductModal(productId);
+            switchModalTab(productId, 'reviews');
+        }
+
+        function switchModalTab(productId, tab) {
+            const specsBtn = document.getElementById('tabBtnSpecs');
+            const reviewsBtn = document.getElementById('tabBtnReviews');
+            const specsContent = document.getElementById('tabContentSpecs');
+            const reviewsContent = document.getElementById('tabContentReviews');
+
+            if (tab === 'specs') {
+                specsBtn.className = "pb-3 border-b-2 border-blue-600 text-blue-600 font-bold";
+                reviewsBtn.className = "pb-3 text-gray-400 hover:text-gray-600 font-bold";
+                specsContent.classList.remove('hidden');
+                reviewsContent.classList.add('hidden');
+            } else {
+                reviewsBtn.className = "pb-3 border-b-2 border-blue-600 text-blue-600 font-bold";
+                specsBtn.className = "pb-3 text-gray-400 hover:text-gray-600 font-bold";
+                reviewsContent.classList.remove('hidden');
+                specsContent.classList.add('hidden');
+            }
+        }
+
+        let currentSlide = 0;
+        function updateSlide() {
+            const track = document.getElementById('carouselTrack');
+            track.style.transform = `translateX(-${currentSlide * 100}%)`;
+            document.querySelectorAll('.slide-dot').forEach((dot, index) => {
+                dot.style.opacity = index === currentSlide ? '1' : '0.5';
+            });
+        }
+        function nextSlide() { currentSlide = (currentSlide + 1) % 2; updateSlide(); }
+        function prevSlide() { currentSlide = (currentSlide - 1 + 2) % 2; updateSlide(); }
+        function goToSlide(i) { currentSlide = i; updateSlide(); }
+        setInterval(nextSlide, 5000);
+
+        function scrollProductsLeft() { document.getElementById('scrollableProducts').scrollBy({ left: -240, behavior: 'smooth' }); }
+        function scrollProductsRight() { document.getElementById('scrollableProducts').scrollBy({ left: 240, behavior: 'smooth' }); }
+
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            const noResults = document.getElementById('noResultsView');
+            const filtered = getFilteredProducts();
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            noResults.classList.add('hidden');
+            grid.innerHTML = filtered.map(product => `
+                <div onclick="openProductModal(${product.id})" class="bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between cursor-pointer group">
+                    <div>
+                        <div class="relative overflow-hidden rounded-xl mb-3 h-44 bg-white">
+                            <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            <span class="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-bold uppercase px-2.5 py-1 rounded-full shadow">
+                                ${product.category}
+                            </span>
+                        </div>
+                        <h4 class="font-bold text-gray-800 text-base leading-snug mb-1 group-hover:text-blue-600 transition">
+                            ${product.name}
+                        </h4>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-200/60 flex items-center justify-between">
+                        <span class="text-xl font-extrabold text-blue-700">$${product.price.toFixed(2)}</span>
+                        <button onclick="event.stopPropagation(); addToCart('${product.name}', ${product.price}, '${product.image}')" 
+                                class="bg-yellow-400 hover:bg-yellow-300 text-blue-950 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition shadow">
+                            <i class="fa-solid fa-cart-plus text-sm"></i>
+                            <span data-i18n="add_btn">${translations[currentLang].add_btn}</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render popular scroll row items
+            const scrollable = document.getElementById('scrollableProducts');
+            scrollable.innerHTML = productsData.slice(0, 5).map(item => `
+                <div onclick="openProductModal(${item.id})" class="w-48 shrink-0 bg-gray-50 p-3 rounded-xl border border-gray-100 hover:shadow-md transition cursor-pointer">
+                    <img src="${item.image}" class="w-full h-32 object-cover rounded-lg mb-2">
+                    <div class="text-xs text-blue-600 font-semibold">${item.category}</div>
+                    <h4 class="font-bold text-sm line-clamp-1 text-gray-800">${item.name}</h4>
+                    <div class="text-blue-700 font-extrabold mt-1">$${item.price.toFixed(2)}</div>
+                    <button onclick="event.stopPropagation(); addToCart('${item.name}', ${item.price}, '${item.image}')" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1.5 rounded-lg font-bold transition flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-cart-plus"></i> <span data-i18n="add_btn">${translations[currentLang].add_btn}</span>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(name, price, image) {
+            const existingItem = cart.find(item => item.name === name);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ name, price, image, quantity: 1 });
+            }
+            updateCartUI();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const badge = document.getElementById('cartBadge');
+            const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            badge.innerText = totalCount;
+
+            const cartList = document.getElementById('cartItemsList');
+            const totalElement = document.getElementById('cartTotal');
+
+            if (cart.length === 0) {
+                cartList.innerHTML = `<p class="text-center text-gray-400 py-6 text-sm">${translations[currentLang].cart_empty}</p>`;
+                totalElement.innerText = '$0.00';
+                return;
+            }
+
+            let grandTotal = 0;
+            cartList.innerHTML = cart.map((item, index) => {
+                const itemTotal = item.price * item.quantity;
+                grandTotal += itemTotal;
+                return `
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <div class="flex items-center gap-3">
+                            <img src="${item.image}" class="w-12 h-12 object-cover rounded-lg border">
+                            <div>
+                                <h5 class="font-bold text-xs text-gray-800 line-clamp-1">${item.name}</h5>
+                                <div class="text-xs text-blue-600 font-semibold">$${item.price.toFixed(2)} x ${item.quantity}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-extrabold text-sm text-gray-800">$${itemTotal.toFixed(2)}</span>
+                            <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 p-1">
+                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            totalElement.innerText = `$${grandTotal.toFixed(2)}`;
+        }
+
+        function toggleCartModal() {
+            document.getElementById('cartModal').classList.toggle('hidden');
+        }
+
+        function checkoutCart() {
+            if (cart.length === 0) return;
+            const message = currentLang === 'ru' 
+                ? 'Заказ успешно оформлен! Спасибо за покупку в КакАБум!' 
+                : 'Order successfully placed! Thank you for shopping at KakABoom!';
+            
+            const total = document.getElementById('cartTotal').innerText;
+            cart = [];
+            updateCartUI();
+            toggleCartModal();
+
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-5 right-5 bg-green-600 text-white font-bold px-5 py-3 rounded-xl shadow-2xl z-50 transition-all';
+            toast.innerText = `${message} (${total})`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'ru' ? 'en' : 'ru';
+            document.getElementById('currentLang').innerText = currentLang.toUpperCase();
+
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    element.innerText = translations[currentLang][key];
+                }
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (translations[currentLang][key]) {
+                    element.placeholder = translations[currentLang][key];
+                }
+            });
+
+            renderProducts();
+            updateCartUI();
+        }
+
+        // Close search autocomplete on outside click
+        document.addEventListener('click', function(e) {
+            const autocomplete = document.getElementById('searchAutocomplete');
+            const searchInput = document.getElementById('searchInput');
+            if (!autocomplete.contains(e.target) && e.target !== searchInput) {
+                autocomplete.classList.add('hidden');
+            }
+        });
+
+        window.onload = function() {
+            renderProducts();
+            updateCartUI();
+        };
+    </script>
+</body>
+</html>
